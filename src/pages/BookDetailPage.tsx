@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
 import { BookCard } from "@/components/BookCard";
+import { BookCover } from "@/components/shared/BookCover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,10 +16,10 @@ const BookDetailPage = () => {
         {/* Hero */}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="shrink-0 mx-auto md:mx-0">
-            <img
+            <BookCover
               src={book.cover}
-              alt={`Cover of ${book.title}`}
-              className="w-40 md:w-52 rounded-xl shadow-xl object-cover aspect-[2/3]"
+              alt={book.title}
+              className="w-40 md:w-52 rounded-xl shadow-xl aspect-[2/3]"
             />
           </div>
           <div className="flex-1 space-y-4 text-center md:text-left">

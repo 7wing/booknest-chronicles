@@ -1,6 +1,7 @@
 import { Search, TrendingUp, Flame, BookOpen } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { BookCard } from "@/components/BookCard";
+import { BookCover } from "@/components/shared/BookCover";
 import { PostCard } from "@/components/PostCard";
 import { LiveCard } from "@/components/LiveCard";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -120,7 +121,7 @@ const Index = () => {
                 {books.slice(3).map((book, i) => (
                   <div key={book.id} className="flex items-center gap-3">
                     <span className="text-lg font-heading font-bold text-accent/60">{i + 1}</span>
-                    <img src={book.cover} alt="" className="h-12 w-8 rounded object-cover" />
+                    <BookCover src={book.cover} alt={book.title} className="h-12 w-8 rounded object-cover" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{book.title}</p>
                       <p className="text-xs text-muted-foreground">{book.author}</p>
@@ -134,7 +135,7 @@ const Index = () => {
             <div className="glass-card p-4 space-y-2 border-accent/20">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Sponsored</p>
               <div className="flex items-center gap-3">
-                <img src={books[1].cover} alt="" className="h-16 w-11 rounded object-cover" />
+                <BookCover src={books[1].cover} alt={books[1].title} className="h-16 w-11 rounded object-cover" />
                 <div>
                   <p className="text-sm font-semibold">New from Penguin</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Discover the season's most anticipated releases</p>

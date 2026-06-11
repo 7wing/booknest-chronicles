@@ -3,20 +3,41 @@ import { LiveCard } from "@/components/LiveCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { BookCover } from "@/components/shared/BookCover";
 import { liveSessions, books } from "@/lib/mock-data";
-import { Users, Heart, MessageCircle, Send, Maximize2, Volume2, ThumbsUp, Smile } from "lucide-react";
-import { useState } from "react";
-
-const chatMessages = [
-  { user: "BookLover22", text: "This chapter is so intense! 😱", time: "now" },
-  { user: "ReadingQueen", text: "I knew it! Called the twist from chapter 3", time: "1m" },
-  { user: "PageTurner", text: "No spoilers for those behind please!", time: "2m" },
-  { user: "LitNerd", text: "The prose in this section is just *chef's kiss*", time: "3m" },
-];
+import { Users, Heart, MessageCircle, Send, Maximize2, Volume2, ThumbsUp, Smile, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useLiveChat } from "@/hooks/useLiveChat";
 
 const LivePage = () => {
   const [showChat, setShowChat] = useState(true);
+  const [messageInput, setMessageInput] = useState("");
   const session = liveSessions[0];
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Use the session ID from the session or a mock ID for now
+  const sessionId = session?.id ?? "default";
+
+  const { messages, viewerCount, isLoading, sendMessage, isSending } = useLiveChat(sessionId);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = () => {
+    if (messageInput.trim()) {
+      sendMessage(messageInput);
+      setMessageInput("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   return (
     <AppLayout>
@@ -44,7 +65,7 @@ const LivePage = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 text-primary-foreground">
                     <Users className="h-4 w-4" />
-                    <span className="text-sm font-medium">{session.viewers} watching</span>
+                    <span className="text-sm font-medium">{viewerCount} watching</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -62,7 +83,7 @@ const LivePage = () => {
             <div className="p-4 border-b border-border bg-card">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex items-center gap-3 flex-1">
-                  <img src={session.book.cover} alt="" className="h-14 w-10 rounded object-cover" />
+                  <BookCover src={session.book.cover} alt={session.book.title} className="h-14 w-10 rounded object-cover" />
                   <div>
                     <h3 className="font-heading text-base font-bold">{session.book.title}</h3>
                     <p className="text-xs text-muted-foreground">by {session.book.author} · Page 142</p>
@@ -96,20 +117,38 @@ const LivePage = () => {
           <div className={`${showChat ? "flex" : "hidden"} lg:flex w-full lg:w-80 xl:w-96 flex-col border-l border-border bg-card h-[50vh] lg:h-[calc(100vh-64px)]`}>
             <div className="p-3 border-b border-border flex items-center justify-between">
               <h3 className="text-sm font-semibold">Live Chat</h3>
-              <Badge className="bg-accent/15 text-accent border-0 text-[10px]">{session.viewers} viewers</Badge>
+              <Badge className="bg-accent/15 text-accent border-0 text-[10px]">{viewerCount} viewers</Badge>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className="flex gap-2">
-                  <Avatar className="h-6 w-6 shrink-0">
-                    <AvatarFallback className="bg-secondary text-[8px]">{msg.user.slice(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <span className="text-xs font-semibold text-accent">{msg.user}</span>
-                    <p className="text-xs text-foreground">{msg.text}</p>
-                  </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ))}
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-center">
+                  <MessageCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-xs text-muted-foreground">No messages yet. Be the first to say something!</p>
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg) => (
+                    <div key={msg.id} className="flex gap-2">
+                      <Avatar className="h-6 w-6 shrink-0">
+                        <AvatarFallback className="bg-secondary text-[8px]">
+                          {msg.user?.display_name?.slice(0, 2).toUpperCase() ?? msg.user_id.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <span className="text-xs font-semibold text-accent">
+                          {msg.user?.display_name ?? "Anonymous"}
+                        </span>
+                        <p className="text-xs text-foreground">{msg.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </>
+              )}
             </div>
             <div className="p-3 border-t border-border">
               <div className="flex items-center gap-2">
@@ -117,9 +156,22 @@ const LivePage = () => {
                   type="text"
                   placeholder="Say something..."
                   className="flex-1 h-9 px-3 rounded-lg bg-secondary border border-border text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSending}
                 />
-                <Button size="icon" className="h-9 w-9 gold-gradient text-accent-foreground border-0">
-                  <Send className="h-3.5 w-3.5" />
+                <Button
+                  size="icon"
+                  className="h-9 w-9 gold-gradient text-accent-foreground border-0"
+                  onClick={handleSendMessage}
+                  disabled={isSending || !messageInput.trim()}
+                >
+                  {isSending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
                 </Button>
               </div>
             </div>

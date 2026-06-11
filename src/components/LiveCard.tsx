@@ -1,6 +1,7 @@
 import { Users, Play } from "lucide-react";
 import type { LiveSession } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
+import { BookCover } from "@/components/shared/BookCover";
 
 interface LiveCardProps {
   session: LiveSession;
@@ -38,7 +39,7 @@ export function LiveCard({ session }: LiveCardProps) {
       </div>
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <img src={session.book.cover} alt="" className="h-8 w-6 rounded object-cover" />
+          <BookCover src={session.book.cover} alt={session.book.title} className="h-8 w-6 rounded object-cover" />
           <span className="text-xs text-muted-foreground truncate">{session.book.title}</span>
         </div>
         <Button size="sm" className="h-8 gap-1.5 gold-gradient text-accent-foreground border-0 hover:opacity-90">

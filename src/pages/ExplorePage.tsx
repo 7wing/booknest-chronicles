@@ -1,6 +1,7 @@
 import { Search, SlidersHorizontal, MapPin } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { BookCard } from "@/components/BookCard";
+import { BookCover } from "@/components/shared/BookCover";
 import { LiveCard } from "@/components/LiveCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +63,7 @@ const ExplorePage = () => {
         <section aria-labelledby="featured-heading">
           <h2 id="featured-heading" className="font-heading text-lg font-bold text-foreground mb-3">Featured</h2>
           <div className="navy-gradient rounded-2xl p-5 md:p-8 flex flex-col md:flex-row items-center gap-5">
-            <img src={books[3].cover} alt="" className="h-40 w-28 rounded-lg object-cover shadow-xl" />
+            <BookCover src={books[3].cover} alt={books[3].title} className="h-40 w-28 rounded-lg object-cover shadow-xl" />
             <div className="text-center md:text-left">
               <Badge className="bg-accent/20 text-accent border-0 mb-2">Editor's Pick</Badge>
               <h3 className="font-heading text-xl font-bold text-primary-foreground">{books[3].title}</h3>
@@ -106,7 +107,7 @@ const ExplorePage = () => {
             {clubs.map((club) => (
               <div key={club.id} className="book-card p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <img src={club.currentBook.cover} alt="" className="h-14 w-10 rounded object-cover" />
+                  <BookCover src={club.currentBook.cover} alt={club.currentBook.title} className="h-14 w-10 rounded object-cover" />
                   <div className="min-w-0">
                     <h3 className="font-heading text-sm font-bold truncate">{club.name}</h3>
                     <p className="text-xs text-muted-foreground">{club.members.toLocaleString()} members</p>

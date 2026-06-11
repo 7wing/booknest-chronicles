@@ -1,21 +1,20 @@
+import { useState } from "react";
 import { BookOpen, Target, BarChart3, Calendar, Plus, Share2 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { BookCard } from "@/components/BookCard";
 import { ProgressRing } from "@/components/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { books } from "@/lib/mock-data";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMyBooks } from "@/hooks/useBooks";
+import type { Book } from "@/lib/mock-data";
 
-const shelves = [
-  { label: "Currently Reading", count: 3, books: books.filter(b => b.progress && b.progress > 0 && b.progress < 100) },
-  { label: "TBR", count: 15, books: [books[3], books[4]] },
-  { label: "Finished", count: 42, books: [books[1]] },
-];
-
-const stats = [
-  { label: "Books Read", value: "42", icon: BookOpen },
-  { label: "Pages", value: "12,480", icon: BarChart3 },
-  { label: "Avg Rating", value: "4.2", icon: Target },
+const shelfConfig = [
+  { label: "Currently Reading", status: "reading" as const },
+  { label: "TBR", status: "tbr" as const },
+  { label: "Finished", status: "finished" as const },
+  { label: "Wishlist", status: "wishlist" as const },
+  { label: "DNF", status: "dnf" as const },
 ];
 
 const genreData = [
@@ -26,10 +25,47 @@ const genreData = [
   { name: "Other", pct: 8, color: "bg-muted" },
 ];
 
+function mapToBookCard(userBook: any): Book {
+  return {
+    id: userBook.book?.id ?? userBook.id,
+    title: userBook.book?.title ?? "Unknown",
+    author: userBook.book?.author ?? "Unknown",
+    cover: userBook.book?.cover_url ?? "",
+    rating: userBook.book?.rating_avg ?? userBook.rating ?? 0,
+    genre: userBook.book?.genre ?? "",
+    progress: userBook.progress ?? 0,
+    pages: userBook.book?.pages ?? 0,
+    mood: userBook.book?.mood ?? undefined,
+  };
+}
+
+function ShelfSkeleton() {
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x scrollbar-none md:grid md:grid-cols-4 lg:grid-cols-6 md:overflow-visible md:mx-0 md:px-0">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="snap-start shrink-0 md:shrink flex flex-col gap-2">
+          <Skeleton className="w-32 md:w-36 aspect-[2/3] rounded-t-xl" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const MyBooksPage = () => {
+  const { data: allBooks, isLoading } = useMyBooks();
+
+  const stats = [
+    { label: "Books Read", value: String(allBooks?.filter((b) => b.status === "finished").length ?? 0), icon: BookOpen },
+    { label: "Pages", value: "12,480", icon: BarChart3 },
+    { label: "Avg Rating", value: "4.2", icon: Target },
+  ];
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 py-5 md:py-6 space-y-8">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">My Books</h1>
           <div className="flex gap-2">
@@ -60,23 +96,41 @@ const MyBooksPage = () => {
         </div>
 
         {/* Shelves */}
-        {shelves.map((shelf, si) => (
-          <section key={shelf.label} aria-labelledby={`shelf-${si}`}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 id={`shelf-${si}`} className="font-heading text-lg font-bold text-foreground">
-                {shelf.label} <span className="text-muted-foreground font-normal text-sm">({shelf.count})</span>
-              </h2>
-              <Button variant="ghost" size="sm" className="text-accent text-xs">View All</Button>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x scrollbar-none md:grid md:grid-cols-4 lg:grid-cols-6 md:overflow-visible md:mx-0 md:px-0">
-              {shelf.books.map((book) => (
-                <div key={book.id} className="snap-start shrink-0 md:shrink">
-                  <BookCard book={book} showProgress size="md" />
+        {shelfConfig.map((shelf, si) => {
+          const shelfBooks = allBooks?.filter((b) => b.status === shelf.status) ?? [];
+          return (
+            <section key={shelf.status} aria-labelledby={`shelf-${si}`}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 id={`shelf-${si}`} className="font-heading text-lg font-bold text-foreground">
+                  {shelf.label}{" "}
+                  <span className="text-muted-foreground font-normal text-sm">({shelfBooks.length})</span>
+                </h2>
+                {shelfBooks.length > 0 && (
+                  <Button variant="ghost" size="sm" className="text-accent text-xs">View All</Button>
+                )}
+              </div>
+
+              {isLoading ? (
+                <ShelfSkeleton />
+              ) : shelfBooks.length === 0 ? (
+                <div className="glass-card p-6 text-center">
+                  <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No books in {shelf.label.toLowerCase()} yet.
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
+              ) : (
+                <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x scrollbar-none md:grid md:grid-cols-4 lg:grid-cols-6 md:overflow-visible md:mx-0 md:px-0">
+                  {shelfBooks.map((userBook) => (
+                    <div key={userBook.id} className="snap-start shrink-0 md:shrink">
+                      <BookCard book={mapToBookCard(userBook)} showProgress size="md" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
 
         {/* Genre Breakdown */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

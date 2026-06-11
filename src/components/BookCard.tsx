@@ -1,6 +1,7 @@
-import { Star, BookOpen } from "lucide-react";
+import { Star } from "lucide-react";
 import type { Book } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
+import { BookCover } from "@/components/shared/BookCover";
 
 interface BookCardProps {
   book: Book;
@@ -24,11 +25,10 @@ export function BookCard({ book, showProgress = false, size = "md", onClick }: B
     >
       <div className={`${sizes[size]} flex flex-col`}>
         <div className="relative aspect-[2/3] overflow-hidden rounded-t-xl">
-          <img
+          <BookCover
             src={book.cover}
-            alt={`Cover of ${book.title} by ${book.author}`}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            alt={`${book.title} by ${book.author}`}
+            className="h-full w-full transition-transform duration-500 group-hover:scale-105"
           />
           {book.mood && (
             <Badge className="absolute top-2 right-2 bg-accent text-accent-foreground text-[10px] border-0">
